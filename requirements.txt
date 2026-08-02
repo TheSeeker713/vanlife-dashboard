@@ -1,0 +1,9 @@
+# Pinned to latest stable as verified against PyPI on 2026-08-01.
+# Re-verify and re-pin if Phase 0 is re-run significantly later than that date.
+
+PySide6==6.11.1
+python-dotenv==1.2.2
+PyYAML==6.0.3
+faster-whisper==1.2.1
+psutil==7.2.2
+nvidia-ml-py==13.610.43  # provides the `pynvml` import name; official NVIDIA package, successor to the deprecated standalone pynvml on PyPI

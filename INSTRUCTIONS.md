@@ -100,15 +100,15 @@ I ...
 
 ### Step 1.1 — Palette and both theme stylesheets
 
-**Build:** `app/ui/palette.py` (shared hex constants: warm amber/terracotta accent, semantic tag colors, both light and dark surface tokens). `app/ui/dark_theme.qss` (default) and `app/ui/light_theme.qss`, both built together from the same palette, not "dark now, light later."
+**Build:** `app/ui/palette.py` (shared hex constants: warm amber/terracotta accent, semantic tag colors, both light and dark surface tokens). `app/ui/light_theme.qss` (default) and `app/ui/dark_theme.qss`, both built together from the same palette, not "one now, one later."
 
-**Test:** Launching a minimal `QApplication` with `dark_theme.qss` applied shows a consistent dark theme, no unstyled default-grey widgets mixed in. Swapping in `light_theme.qss` at runtime shows a consistent light theme with the same layout.
+**Test:** Launching a minimal `QApplication` with `light_theme.qss` applied shows a consistent light theme, no unstyled default-grey widgets mixed in. Swapping in `dark_theme.qss` at runtime shows a consistent dark theme with the same layout.
 
 ### Step 1.2 — MainWindow shell: page-bar, Sort page, Canvas page placeholder
 
-**Build:** `app/ui/main_window.py`: `QMainWindow` with a top page-bar (`Sort` / `Canvas` tabs, plus a theme toggle) driving a page stack. Sort page: Media Bin (left, placeholder content), Player (center, placeholder), Timeline strip (slim, directly under Player), Chat drawer and Metadata drawer stacked on the right (independent, not tabbed together). Canvas page: placeholder full-page content, reachable via its page-bar tab. Menu bar scaffolded with the full roster (File, Edit, View, Clip, Canvas, Tools, Help), items present even if disabled until their feature phase lands.
+**Build:** `app/ui/main_window.py`: `QMainWindow` with a top page-bar (`Sort` / `Canvas` tabs) driving a page stack. Sort page: Media Bin (left, placeholder content), Player (center, placeholder), Timeline strip (slim, directly under Player), Chat drawer and Metadata drawer stacked on the right (independent, not tabbed together). Canvas page: placeholder full-page content, reachable via its page-bar tab. Menu bar scaffolded with the full roster (File, Edit, View, Clip, Canvas, Tools, Help); the theme toggle lives in the View menu, not as a page-bar icon, since it's an optional setting, not a headline control. Items present even if disabled until their feature phase lands.
 
-**Test:** App launches dark-themed to the shell. Page-bar switches between Sort and Canvas correctly. Every panel and every menu item from the roster is present (even if inert). No crash on launch.
+**Test:** App launches light-themed to the shell. Page-bar switches between Sort and Canvas correctly. Every panel and every menu item from the roster is present (even if inert). No crash on launch.
 
 ### Step 1.3 — Drawer component, layout persistence, shortcut cheat sheet
 

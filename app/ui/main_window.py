@@ -26,7 +26,6 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QPushButton,
-    QToolButton,
     QSplitter,
     QStackedWidget,
     QStatusBar,
@@ -70,7 +69,7 @@ class MainWindow(QMainWindow):
         self.resize(1440, 900)
 
         self.settings = QSettings(ORG_NAME, APP_NAME)
-        self._theme = "dark"
+        self._theme = "light"
 
         self._build_central()
         self._build_menu_bar()
@@ -123,12 +122,9 @@ class MainWindow(QMainWindow):
 
         layout.addStretch(1)
 
-        theme_btn = QToolButton()
-        theme_btn.setObjectName("iconButton")
-        theme_btn.setText("◐")
-        theme_btn.setToolTip("Toggle light/dark theme")
-        theme_btn.clicked.connect(self._toggle_theme)
-        layout.addWidget(theme_btn)
+        # No theme icon here on purpose: dark mode is an optional setting
+        # a user reaches for via View > Toggle Theme, not a headline
+        # page-bar control competing with Sort/Canvas for attention.
 
         return bar
 
@@ -381,8 +377,8 @@ class MainWindow(QMainWindow):
         if geometry is not None:
             self.restoreGeometry(geometry)
 
-        theme = self.settings.value("theme", "dark")
-        self._theme = theme if theme in ("dark", "light") else "dark"
+        theme = self.settings.value("theme", "light")
+        self._theme = theme if theme in ("dark", "light") else "light"
 
         page_index = int(self.settings.value("current_page", 0))
         self._switch_page(page_index if page_index in (0, 1) else 0)

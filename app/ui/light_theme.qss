@@ -1,6 +1,6 @@
-/* Light theme, optional (toggled from the page-bar). Same selectors as
-   dark_theme.qss on purpose, only the color values differ, kept in sync
-   by hand with palette.py's LIGHT dict. */
+/* Light theme, default. Same selectors as dark_theme.qss on purpose,
+   only the color values differ, kept in sync by hand with palette.py's
+   LIGHT dict. */
 
 QWidget {
     background-color: #f4f3f0;

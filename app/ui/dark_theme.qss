@@ -1,7 +1,7 @@
-/* Dark theme, default. Hex values kept in sync by hand with palette.py's
-   DARK dict and with light_theme.qss's structure (same selectors, different
-   values) so the two never drift into different layouts, only different
-   colors. */
+/* Dark theme, optional (View > Toggle Theme). Hex values kept in sync by
+   hand with palette.py's DARK dict and with light_theme.qss's structure
+   (same selectors, different values) so the two never drift into
+   different layouts, only different colors. */
 
 QWidget {
     background-color: #131412;

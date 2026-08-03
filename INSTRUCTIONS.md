@@ -10,33 +10,68 @@ Default branch: `main`
 
 ## PHASE_STEP_PROTOCOL
 
-Within a phase, execute all steps in sequence without waiting for human input between steps.
+Full detail: [.claude/rules/phase-protocol.md](.claude/rules/phase-protocol.md), which is followed automatically regardless of whether this file gets re-read. Summary:
 
-Every step is: build the step's deliverable, test it, verify the test actually passed (check real output/state, don't assume a clean exit code means success), and only if the test passes: commit, push to `main`, and write a devlog entry (see Devlog spec below). A failed or unverified test means the step is not complete. Do not move to the next step until the failure is resolved and the test passes.
+Within a phase, execute steps (N.1, N.2, N.3...) in sequence without waiting for human input between them. Each step: build the deliverable, test it, verify the test actually passed (check real output/state, don't assume a clean exit code means success). A failed or unverified test means the step isn't done, fix it before moving to the next step. Steps do not each get their own commit, the phase commits once, after the close-out sequence below.
 
-After the LAST step in a phase is committed and pushed, stop. Do not start the next phase. Report a phase summary and wait for Jeremy's explicit go-ahead before continuing.
+Once every step in the phase is built and individually tested, run the close-out sequence before anything is committed:
+
+1. **Cross-Check & Full Project Audit** — grep for stale references to anything renamed/removed this phase, confirm `AGENTS.md`/`INSTRUCTIONS.md`/the plan doc still agree with what was actually built, confirm no stray test/debug artifacts are staged, review the full diff about to be committed.
+2. **Re-run tests** — the phase's own automated tests plus a quick regression pass against prior phases' tests, not just the newest step.
+3. **Commit and push** — one commit for the phase (a couple more only if the audit surfaced real fixes needed), pushed to `main`.
+4. **Devlog entry**, per the spec below.
+5. **UI/UX checklist** (phases with a user-facing surface only) — see the dedicated section below. The phase is not closed and the next phase does not start until Jeremy has run the checklist himself and confirmed, not merely accepted the agent's own report. Phases with no user-facing surface get a lighter functional-verification note instead, stated explicitly rather than silently skipped.
+
+Stop after step 5. Do not start the next phase. Report a phase summary and wait for Jeremy's explicit go-ahead before continuing.
 
 ---
 
 ## Devlog spec
 
 - **Location:** `docs/devlog/{YYYY-MM-DD}devlog.md`
-- One file per calendar day. Create it on the first entry of that day. Append for every subsequent step completed that day.
+- One file per calendar day. Create it on the first entry of that day. Append for every subsequent phase closed that day.
 - Devlogs are tracked in git. Never gitignore them.
-- Every commit and push at the end of a step is paired with a devlog entry for that step, timestamped with date and time.
-- Written in first person as Jeremy Robards, CTO and CAIO of Mycelia Interactive LLC. Not written as an AI. Not written as a status report. Written like a real person narrating their own work: "I started on...", "Got stuck for a while on...", "That was frustrating.", "Didn't expect that to work but it did." Natural reactions mixed with real technical detail. Professional grade writing with genuine personal humor woven in, not corporate voice, not robotic changelog format.
-- Each entry must be detailed and explicit about what was actually built or debugged in that step, not vague. It should read like someone who understands the system explaining their own work.
-- Never use em dashes anywhere in devlog text. Use commas or colons instead.
-- Never reach for "it's not X, it's Y" contrast framing repeatedly. Never write fragmented pseudo-profound sentences ("Short. Isolated. Trying to feel reflective."). Both are documented AI writing tics; write in real sentences instead.
-- Write from the four components of authentic self-expression: self-awareness (say what actually happened, including the parts that didn't work), unbiased processing (don't spin a rough step into a clean win it wasn't), behavioral consistency (the same voice across entries), relational transparency (write like explaining it to someone you trust, not performing for an audience).
+- Every phase-close commit and push is paired with a devlog entry, timestamped with date and time.
+- **Voice rules:** the full canonical spec lives in [.claude/rules/devlog-voice.md](.claude/rules/devlog-voice.md) (research grounding, full "never use" list, full "always do" list). Read it before writing an entry, don't rely on memory of it. Short version: written entirely in first person as Jeremy Robards, CTO and CAIO of Mycelia Interactive LLC, never narrated *about* him in the third person. Not written as an AI, not written as a status report. No em dashes. No "not X, but Y" contrast framing. No inflated verbs (delve, underscore, showcase, foster, leverage, boast). Anchored in at least one real, specific detail (a real filename, a real error, a real number) per entry, not summarized in the abstract.
+- Each entry must be detailed and explicit about what was actually built or debugged, not vague. It should read like someone who understands the system explaining their own work.
 
 **Entry shape (guidance, not a rigid template):**
 
 ```markdown
-### HH:MM - Phase N Step M: <short title>
+### HH:MM - Phase N: <short title>
 
 I ...
 ```
+
+---
+
+## UI/UX Checklist requirement
+
+Every phase that changes what the user sees or interacts with needs a concrete, phase-specific checklist Jeremy runs by hand before the phase counts as closed. The agent's own screenshots and automated tests are necessary but not sufficient, they catch structural bugs, not whether the thing actually feels right to use.
+
+**How to build one:** derive each item directly from that phase's Build/Test descriptions above, phrased as an action plus an expected result ("Click X, confirm Y happens"), not a vague "check that it works." Keep it short enough to actually run through in a few minutes, not a full QA pass. Generate it fresh at that phase's real close-out, against what was actually built, not written in advance for phases that haven't landed yet, a checklist written against a guess goes stale the moment the real UI differs.
+
+Phases with no user-facing surface (pure backend/governance, e.g. Phase 0, most of Phase 2) get a lighter functional checklist instead of a UI/UX one, or skip this step with that noted explicitly rather than silently.
+
+### Worked example: Phase 1 (retroactive)
+
+Phase 1 shipped before this requirement existed. This is the checklist Jeremy is running now, after the fact, to close that gap, and the template every later phase's checklist follows the shape of:
+
+- [ ] Launch the app. Confirm it opens light-themed, Sort page active by default.
+- [ ] Click the Canvas tab in the page-bar. Confirm it switches cleanly and the active-tab underline moves to Canvas.
+- [ ] Click Media Bin's maximize icon (`⤢`). Confirm Chat, Metadata, Player, and Timeline all hide and Media Bin fills the Sort page.
+- [ ] Click the same icon again (`⤥`). Confirm everything restores to its prior layout.
+- [ ] Click Media Bin's collapse icon. Confirm it shrinks to a thin strip at the left edge instead of disappearing.
+- [ ] Click the collapsed strip. Confirm it expands back to its previous width.
+- [ ] Collapse the Chat drawer. Confirm Metadata stays open, they're independent, not linked.
+- [ ] Collapse Metadata. Confirm Chat is unaffected.
+- [ ] Open View menu, click Toggle Theme. Confirm it switches to dark cleanly, no flash of unstyled widgets.
+- [ ] Toggle back to light from the same menu item.
+- [ ] Resize the window and drag a splitter to change panel widths, close the app, relaunch it. Confirm geometry, theme, current page, and panel widths/collapsed-states all come back exactly as left.
+- [ ] Press F1 (and separately `?`). Confirm the shortcuts cheat sheet opens and closes cleanly.
+- [ ] Open Help > Navigate. Confirm the tour lists every real panel (Media Bin, Player, Timeline, Chat, Metadata, Canvas page).
+- [ ] Open Help > About. Confirm the app name, version, and author line are correct.
+- [ ] Hover/click a few disabled menu items (things not built yet). Confirm they're inert, no crash, no console error.
 
 ---
 

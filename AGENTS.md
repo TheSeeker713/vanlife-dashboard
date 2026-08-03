@@ -30,7 +30,7 @@ This is a human-in-the-loop tool. Agents (chat, auto-tagging, transcription) act
 
 5. **Agents activate only on user input.** No scheduler, no APScheduler, no autonomous multi-step loop. One chat turn is one request/response. The resource watchdog's "soft shutdown" is a rule-based safety brake, not an autonomous agent action, and it only pauses new AI/transcode work, never deletes or mutates anything on disk.
 
-6. **Verification before assertion.** Never report a step complete without actually checking: run the step's test, read its real output, confirm the claimed state matches. This project follows SEEKERS_GHOSTS's own documented lesson about false-positive completion claims.
+6. **Verification before assertion.** Never report a step complete without actually checking: run the step's test, read its real output, confirm the claimed state matches. This project follows SEEKERS_GHOSTS's own documented lesson about false-positive completion claims. For any phase with a user-facing surface, this specifically includes Jeremy running the phase's UI/UX checklist himself, the agent's own screenshots and automated tests are necessary but not sufficient to close such a phase.
 
 7. **Secrets.** Any API keys or credentials (e.g. for an optional OpenClaw/Grok backend) live in `.env` only, gitignored. `.env.example` ships with placeholders only.
 
@@ -40,12 +40,12 @@ This is a human-in-the-loop tool. Agents (chat, auto-tagging, transcription) act
 
 ## Development protocol (summary)
 
-Full detail: [INSTRUCTIONS.md](INSTRUCTIONS.md).
+Full detail: [INSTRUCTIONS.md](INSTRUCTIONS.md) and [.claude/rules/phase-protocol.md](.claude/rules/phase-protocol.md) (auto-followed regardless of whether INSTRUCTIONS.md gets re-read).
 
 - Inside a phase, run steps in sequence without waiting between steps.
-- Each step: build → test → verify the test actually passed (check real output, not just exit code) → only then commit, push to `main`, and append a devlog entry.
-- A failed or unverified test means the step is incomplete. Fix and re-test before moving on.
-- After the **last** step of a phase is committed and pushed: **stop**. Report a phase summary. Wait for Jeremy's explicit go-ahead before starting the next phase.
+- Each step: build → test → verify the test actually passed (check real output, not just exit code). A failed or unverified test means the step is incomplete, fix and re-test before moving on.
+- Steps don't each get their own commit. Once every step in the phase is done, run the close-out sequence: **Cross-Check & Full Project Audit** (stale references, doc/code agreement, clean diff) → **re-run tests** (this phase plus a regression pass on prior phases) → **one commit and push** for the phase → **devlog entry** (voice rules in [.claude/rules/devlog-voice.md](.claude/rules/devlog-voice.md)) → **UI/UX checklist** for phases with a user-facing surface, run by Jeremy himself, not just the agent.
+- After that sequence: **stop**. Report a phase summary. Wait for Jeremy's explicit go-ahead before starting the next phase.
 
 ---
 
@@ -53,7 +53,8 @@ Full detail: [INSTRUCTIONS.md](INSTRUCTIONS.md).
 
 1. [AGENTS.md](AGENTS.md) (this file)
 2. [INSTRUCTIONS.md](INSTRUCTIONS.md)
-3. Most recent entry under `docs/devlog/`
+3. [.claude/rules/](.claude/rules/) (`phase-protocol.md`, `devlog-voice.md`) — durable rules, auto-followed even if 1 and 2 aren't re-read
+4. Most recent entry under `docs/devlog/`
 
 ---
 

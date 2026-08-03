@@ -91,7 +91,7 @@ Phase 1 shipped before this requirement existed. This is the checklist Jeremy is
 
 ### Step 0.1 — Directory skeleton and virtual environment
 
-**Build:** Create the project folder structure (`app/`, `app/ui/`, `data/`, `data/proxies/`, `docs/devlog/`) and a dedicated venv at the project root (`python -m venv .venv`).
+**Build:** Create the project folder structure (`vldash/`, `vldash/ui/`, `data/`, `data/proxies/`, `docs/devlog/`) and a dedicated venv at the project root (`python -m venv .venv`).
 
 **Test:** All folders exist. `.venv\Scripts\python.exe --version` runs and reports a Python 3 interpreter distinct from any already-active environment.
 
@@ -135,19 +135,19 @@ Phase 1 shipped before this requirement existed. This is the checklist Jeremy is
 
 ### Step 1.1 — Palette and both theme stylesheets
 
-**Build:** `app/ui/palette.py` (shared hex constants: warm amber/terracotta accent, semantic tag colors, both light and dark surface tokens). `app/ui/light_theme.qss` (default) and `app/ui/dark_theme.qss`, both built together from the same palette, not "one now, one later."
+**Build:** `vldash/ui/palette.py` (shared hex constants: warm amber/terracotta accent, semantic tag colors, both light and dark surface tokens). `vldash/ui/light_theme.qss` (default) and `vldash/ui/dark_theme.qss`, both built together from the same palette, not "one now, one later."
 
 **Test:** Launching a minimal `QApplication` with `light_theme.qss` applied shows a consistent light theme, no unstyled default-grey widgets mixed in. Swapping in `dark_theme.qss` at runtime shows a consistent dark theme with the same layout.
 
 ### Step 1.2 — MainWindow shell: page-bar, Sort page, Canvas page placeholder
 
-**Build:** `app/ui/main_window.py`: `QMainWindow` with a top page-bar (`Sort` / `Canvas` tabs) driving a page stack. Sort page: Media Bin (left, placeholder content), Player (center, placeholder), Timeline strip (slim, directly under Player), Chat drawer and Metadata drawer stacked on the right (independent, not tabbed together). Canvas page: placeholder full-page content, reachable via its page-bar tab. Menu bar scaffolded with the full roster (File, Edit, View, Clip, Canvas, Tools, Help); the theme toggle lives in the View menu, not as a page-bar icon, since it's an optional setting, not a headline control. Items present even if disabled until their feature phase lands.
+**Build:** `vldash/ui/main_window.py`: `QMainWindow` with a top page-bar (`Sort` / `Canvas` tabs) driving a page stack. Sort page: Media Bin (left, placeholder content), Player (center, placeholder), Timeline strip (slim, directly under Player), Chat drawer and Metadata drawer stacked on the right (independent, not tabbed together). Canvas page: placeholder full-page content, reachable via its page-bar tab. Menu bar scaffolded with the full roster (File, Edit, View, Clip, Canvas, Tools, Help); the theme toggle lives in the View menu, not as a page-bar icon, since it's an optional setting, not a headline control. Items present even if disabled until their feature phase lands.
 
 **Test:** App launches light-themed to the shell. Page-bar switches between Sort and Canvas correctly. Every panel and every menu item from the roster is present (even if inert). No crash on launch.
 
 ### Step 1.3 — Drawer component, layout persistence, shortcut cheat sheet
 
-**Build:** `app/ui/drawer.py`: reusable collapsible-panel component with docked/collapsed states (Media Bin additionally gets a maximized state), used by Media Bin, Chat, and Metadata rather than three hand-rolled implementations. `QSettings`-backed `saveState()`/`restoreState()` for layout, including which drawers are collapsed and Media Bin's current state. `Help > Shortcuts` (and `?`/F1) opens a cheat sheet overlay listing the shortcut roster (populated as later phases add real shortcuts).
+**Build:** `vldash/ui/drawer.py`: reusable collapsible-panel component with docked/collapsed states (Media Bin additionally gets a maximized state), used by Media Bin, Chat, and Metadata rather than three hand-rolled implementations. `QSettings`-backed `saveState()`/`restoreState()` for layout, including which drawers are collapsed and Media Bin's current state. `Help > Shortcuts` (and `?`/F1) opens a cheat sheet overlay listing the shortcut roster (populated as later phases add real shortcuts).
 
 **Test:** Media Bin's collapse (`⟨`/`⟩`) and maximize (`⤢`) both work and can be combined with the other panels correctly (maximizing Media Bin hides Chat/Metadata/Timeline as expected). Chat and Metadata collapse independently of each other. Resize/collapse a panel, switch to Canvas and back, close and relaunch the app, confirm the arrangement (including drawer/maximize states) persisted. Cheat sheet opens and closes cleanly.
 
@@ -161,19 +161,19 @@ Phase 1 shipped before this requirement existed. This is the checklist Jeremy is
 
 ### Step 2.1 — sys.path wiring and gates
 
-**Build:** `app/config.py`: sentinel-checked `sys.path.insert` to the SEEKERS_GHOSTS root, import `GATE` from `app.concurrency`, define `TRANSCODE_GATE` and `WHISPER_GATE` as independent `SingleJobGate` instances.
+**Build:** `vldash/config.py`: sentinel-checked `sys.path.insert` to the SEEKERS_GHOSTS root, import `GATE` from `app.concurrency`, define `TRANSCODE_GATE` and `WHISPER_GATE` as independent `SingleJobGate` instances.
 
-**Test:** A throwaway script imports `config` and confirms all three gates exist and are distinct instances. Confirm whether this project's own `app/` package name collides with the sibling's `app` package in practice; if it does, rename this project's package to `vldash/` before continuing and re-run this test.
+**Test:** A throwaway script imports `config` and confirms all three gates exist and are distinct instances, and that `import app` resolves to the sibling repo's `app` package (has a `concurrency` submodule), not this project's own package. This project's package was originally named `app/` too and the collision was real and immediate: `python -m app.main` caches `app` in `sys.modules` as *this* project's package before any sys.path insert can run, so `from app.concurrency import GATE` fails with `ModuleNotFoundError` every time. Confirmed by actually running it, not by inspection. Renamed this project's package to `vldash/` per the pre-agreed fallback; the test above is what a clean run now looks like.
 
 ### Step 2.2 — Database schema
 
-**Build:** `app/db.py`: full schema (`clips`, `markers`, `chat_messages`, `organize_events`, `note_phrases`, `roots`, `canvas_boards`, `canvas_regions`, `canvas_cards`, `ai_analysis`, `transcripts`, `footage_search` FTS5), `init_db()`, default `roots` seed (source, dest, project).
+**Build:** `vldash/db.py`: full schema (`clips`, `markers`, `chat_messages`, `organize_events`, `note_phrases`, `roots`, `canvas_boards`, `canvas_regions`, `canvas_cards`, `ai_analysis`, `transcripts`, `footage_search` FTS5), `init_db()`, default `roots` seed (source, dest, project).
 
 **Test:** Fresh `init_db()` creates every table. `roots` has exactly 3 rows with `is_default=1`. Re-running `init_db()` does not duplicate the seed.
 
 ### Step 2.3 — Path allow-list
 
-**Build:** `app/paths.py::resolve_safe_path(root_key, relative)`, resolving against the live `roots` table, raising `PathViolation` on any traversal outside the resolved root.
+**Build:** `vldash/paths.py::resolve_safe_path(root_key, relative)`, resolving against the live `roots` table, raising `PathViolation` on any traversal outside the resolved root.
 
 **Test:** Real entries list correctly under all 3 default roots. A `..`-style relative path raises `PathViolation`, not a silent escape.
 
@@ -193,7 +193,7 @@ Phase 1 shipped before this requirement existed. This is the checklist Jeremy is
 
 ### Step 3.1 — Grid/Filmstrip/List views for the 3 default roots
 
-**Build:** `app/ui/media_bin_panel.py`: Grid (default)/Filmstrip/List view toggle for Source (read-only), Destination (browse + create/rename/delete), Project (read-only), all routed through `resolve_safe_path`. `media.py`/ffmpeg don't exist yet, so grid cells use a file-type placeholder graphic, not a blank box and not a real thumbnail yet, that lands in Phase 4.
+**Build:** `vldash/ui/media_bin_panel.py`: Grid (default)/Filmstrip/List view toggle for Source (read-only), Destination (browse + create/rename/delete), Project (read-only), all routed through `resolve_safe_path`. `media.py`/ffmpeg don't exist yet, so grid cells use a file-type placeholder graphic, not a blank box and not a real thumbnail yet, that lands in Phase 4.
 
 **Test:** Real directory entries render for all 3 roots against the actual `J:` and `D:` paths, in all 3 view modes. Dest-side create/rename works. Deleting a non-empty dest folder is refused with a clear error, not a recursive wipe.
 
@@ -207,7 +207,7 @@ Phase 1 shipped before this requirement existed. This is the checklist Jeremy is
 
 ### Step 4.1 — ffprobe wrapper
 
-**Build:** `app/media.py::probe(path)`, capturing `duration_seconds`/`fps` into the `clips` row on first open.
+**Build:** `vldash/media.py::probe(path)`, capturing `duration_seconds`/`fps` into the `clips` row on first open.
 
 **Test:** Run against a real `.MOV` from `Clips\`, confirm correct duration/fps captured.
 
@@ -219,7 +219,7 @@ Phase 1 shipped before this requirement existed. This is the checklist Jeremy is
 
 ### Step 4.3 — Player panel
 
-**Build:** `app/ui/player_panel.py`: `QVideoWidget`, defaults to 720p on open, quality `QComboBox` for 720p/1080p/4K.
+**Build:** `vldash/ui/player_panel.py`: `QVideoWidget`, defaults to 720p on open, quality `QComboBox` for 720p/1080p/4K.
 
 **Test:** Real clip defaults to 720p and scrubs smoothly. Switching to 4K plays the original file directly with no transcode. Switching to 1080p generates and plays that proxy.
 
@@ -245,7 +245,7 @@ Phase 1 shipped before this requirement existed. This is the checklist Jeremy is
 
 ### Step 5.2 — Fullscreen and timeline strip
 
-**Build:** Plain `F` toggles fullscreen. `app/ui/timeline_strip.py` paints marker ticks (colored by tag) along the scrub bar, sized as a slim strip directly under the Player, not a peer-sized dock.
+**Build:** Plain `F` toggles fullscreen. `vldash/ui/timeline_strip.py` paints marker ticks (colored by tag) along the scrub bar, sized as a slim strip directly under the Player, not a peer-sized dock.
 
 **Test:** `F` toggles fullscreen cleanly in and out. Timeline renders correctly once markers exist (verified again in Phase 6).
 
@@ -259,19 +259,19 @@ Phase 1 shipped before this requirement existed. This is the checklist Jeremy is
 
 ### Step 6.1 — Quick-tag and M-marker
 
-**Build:** Digit keys 1-9 for instant quick-tag markers. `M` captures the current timestamp, auto-pauses, opens `app/ui/marker_popup.py`'s inline note editor.
+**Build:** Digit keys 1-9 for instant quick-tag markers. `M` captures the current timestamp, auto-pauses, opens `vldash/ui/marker_popup.py`'s inline note editor.
 
 **Test:** Digit-key markers appear instantly with correct tag/color. `M` pauses playback and opens the note popup at the correct timestamp whether triggered while playing or after scrubbing.
 
 ### Step 6.2 — Autosuggest
 
-**Build:** `app/suggest.py`: curated starter vocabulary blended with `note_phrases` frequency learning. Ghost-text prefix match in the popup, TAB commits, any other key is untouched normal typing.
+**Build:** `vldash/suggest.py`: curated starter vocabulary blended with `note_phrases` frequency learning. Ghost-text prefix match in the popup, TAB commits, any other key is untouched normal typing.
 
 **Test:** Typing a prefix that matches a curated or learned phrase shows ghost-text. TAB commits it. A different key (e.g. space) does not commit and continues normal typing.
 
 ### Step 6.3 — Metadata document
 
-**Build:** `app/metadata_doc.py`: Markdown + YAML frontmatter, one file per clip under `_metadata\`, created on first marker or first chat action, `## Markers` section appended on every marker save.
+**Build:** `vldash/metadata_doc.py`: Markdown + YAML frontmatter, one file per clip under `_metadata\`, created on first marker or first chat action, `## Markers` section appended on every marker save.
 
 **Test:** First marker on a clip creates `_metadata\<stem>.md` with correct frontmatter and marker line. Second marker appends, does not overwrite. Markers and doc both survive an app restart.
 
@@ -285,13 +285,13 @@ Phase 1 shipped before this requirement existed. This is the checklist Jeremy is
 
 ### Step 7.1 — Chunked copy and streaming hash
 
-**Build:** `app/hashing.py`: chunked copy (thread-safe for large files), streaming sha256 of source and destination.
+**Build:** `vldash/hashing.py`: chunked copy (thread-safe for large files), streaming sha256 of source and destination.
 
 **Test:** Copy a real 500MB+ clip, confirm byte-identical hash match, confirm progress reporting during the operation.
 
 ### Step 7.2 — OrganizeWorker and Discard folder
 
-**Build:** `app/workers.py::OrganizeWorker(QThread)` running the copy/verify job through `GATE`, auto-created `Discard` folder under `dest`, Shift+X one-key discard, `]`/`[` next/previous-unreviewed navigation.
+**Build:** `vldash/workers.py::OrganizeWorker(QThread)` running the copy/verify job through `GATE`, auto-created `Discard` folder under `dest`, Shift+X one-key discard, `]`/`[` next/previous-unreviewed navigation.
 
 **Test:** Organizing to a real folder and discarding to `Discard` both go through the identical flow and both leave the source file provably untouched (still present, unchanged mtime) afterward. Shift+X auto-advances to the next unreviewed clip.
 
@@ -311,13 +311,13 @@ Phase 1 shipped before this requirement existed. This is the checklist Jeremy is
 
 ### Step 8.1 — Prompt construction and Ollama call
 
-**Build:** `app/agent_core.py`: system prompt, per-turn context (clip, markers, dest folder listing), `ChatWorker(QThread)` calling `ollama_generate` through `GATE`.
+**Build:** `vldash/agent_core.py`: system prompt, per-turn context (clip, markers, dest folder listing), `ChatWorker(QThread)` calling `ollama_generate` through `GATE`.
 
 **Test:** A throwaway script (no UI) sends a known clip + message, confirms a real Ollama response comes back through the gate.
 
 ### Step 8.2 — Action parsing and confirm/cancel
 
-**Build:** `parse_action()` for the JSON-envelope action schema (`organize`, `append_metadata_note`, `search_footage`, `create_folder`, `rename_folder`, `delete_folder`). `app/ui/chat_panel.py` renders confirm/cancel cards for mutating actions, applies `append_metadata_note`/`search_footage` immediately.
+**Build:** `parse_action()` for the JSON-envelope action schema (`organize`, `append_metadata_note`, `search_footage`, `create_folder`, `rename_folder`, `delete_folder`). `vldash/ui/chat_panel.py` renders confirm/cancel cards for mutating actions, applies `append_metadata_note`/`search_footage` immediately.
 
 **Test:** "File this in Animal clips" produces a `pending_action`, nothing touches disk until confirmed. "Delete this clip" is refused in plain text and offers Discard instead. Confirming an organize action calls the same `OrganizeWorker` path the manual UI button uses.
 
@@ -337,7 +337,7 @@ Phase 1 shipped before this requirement existed. This is the checklist Jeremy is
 
 ### Step 9.1 — Add Folder dialog and dynamic roots
 
-**Build:** `app/ui/add_folder_dialog.py`: native folder picker, prompts every time for a label and a kind (`readonly`/`dest`). `paths.py` resolves against the live `roots` table including user-added rows. `media_bin_panel.py` renders one section per registered root.
+**Build:** `vldash/ui/add_folder_dialog.py`: native folder picker, prompts every time for a label and a kind (`readonly`/`dest`). `paths.py` resolves against the live `roots` table including user-added rows. `media_bin_panel.py` renders one section per registered root.
 
 **Test:** Add a throwaway test folder, confirm it's browsable. Confirm a `readonly`-kind added folder is rejected as an organize/copy target. Unregister it and confirm the app forgets it without touching the folder on disk.
 
@@ -351,7 +351,7 @@ Phase 1 shipped before this requirement existed. This is the checklist Jeremy is
 
 ### Step 10.1 — Board switcher and cards
 
-**Build:** `app/ui/canvas_panel.py`, `canvas_card.py`: replace the Phase 1 placeholder Canvas page content with the real toolbar (board switcher, card/region count) and surface; multiple named boards, drag-a-clip-to-create-a-card, `media.py::grab_thumbnail()` for card previews, viewport caching for smooth pan/zoom.
+**Build:** `vldash/ui/canvas_panel.py`, `canvas_card.py`: replace the Phase 1 placeholder Canvas page content with the real toolbar (board switcher, card/region count) and surface; multiple named boards, drag-a-clip-to-create-a-card, `media.py::grab_thumbnail()` for card previews, viewport caching for smooth pan/zoom.
 
 **Test:** Switch to the Canvas page, create a board, drag 3-4 real clips onto it, confirm smooth pan/zoom with the cards placed. Double-click a card, confirm it switches back to the Sort page with that clip loaded in the Player.
 
@@ -371,19 +371,19 @@ Phase 1 shipped before this requirement existed. This is the checklist Jeremy is
 
 ### Step 11.1 — VLM auto-tagging
 
-**Build:** `app/vlm_tagging.py`: 3-frame grab, base64 POST to a local vision model with `images`, result stored in `ai_analysis`, shown as a dismissible "AI suggested tags" chip row.
+**Build:** `vldash/vlm_tagging.py`: 3-frame grab, base64 POST to a local vision model with `images`, result stored in `ai_analysis`, shown as a dismissible "AI suggested tags" chip row.
 
 **Test:** Opening a real clip auto-populates the chip row within a reasonable delay, clearly labeled as AI-generated and editable.
 
 ### Step 11.2 — Transcription
 
-**Build:** `app/transcribe.py`: ffmpeg audio extraction, `faster-whisper` (CPU, int8) through `WHISPER_GATE`, segments stored in `transcripts` and appended to the metadata doc.
+**Build:** `vldash/transcribe.py`: ffmpeg audio extraction, `faster-whisper` (CPU, int8) through `WHISPER_GATE`, segments stored in `transcripts` and appended to the metadata doc.
 
 **Test:** Manually triggering "Transcribe audio" on a clip with real dialogue produces a correct timestamped transcript in the metadata doc.
 
 ### Step 11.3 — Search index and chat action
 
-**Build:** `app/search_index.py` FTS5 table over filenames/tags/transcripts/marker notes, `search_footage` chat action wired to it.
+**Build:** `vldash/search_index.py` FTS5 table over filenames/tags/transcripts/marker notes, `search_footage` chat action wired to it.
 
 **Test:** Chat "which clips mention <a word actually present in test footage>" returns the correct clip via the FTS5 query, not a hallucinated match.
 
@@ -397,7 +397,7 @@ Phase 1 shipped before this requirement existed. This is the checklist Jeremy is
 
 ### Step 12.1 — Keeper CSV
 
-**Build:** `app/export_edl.py`: CSV export of tagged markers across selected clips.
+**Build:** `vldash/export_edl.py`: CSV export of tagged markers across selected clips.
 
 **Test:** Export opens cleanly in a spreadsheet with correct filename/timestamp/tag/note columns.
 
@@ -421,7 +421,7 @@ Phase 1 shipped before this requirement existed. This is the checklist Jeremy is
 
 ### Step 13.2 — README
 
-**Build:** `README.md`: how to run (`python -m app.main` or equivalent), the 3 default roots, default model, known limitations.
+**Build:** `README.md`: how to run (`python -m vldash.main` or equivalent), the 3 default roots, default model, known limitations.
 
 **Test:** Following the README from a clean checkout (fresh `.venv`, `pip install -r requirements.txt`, run command) actually launches the app.
 

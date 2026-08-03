@@ -16,7 +16,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from PySide6.QtCore import Qt, QSettings
+from PySide6.QtCore import Qt, QSettings, QTimer
 from PySide6.QtGui import QAction, QKeySequence
 from PySide6.QtWidgets import (
     QApplication,
@@ -31,6 +31,7 @@ from PySide6.QtWidgets import (
     QStatusBar,
 )
 
+from .. import config, health
 from .drawer import Drawer
 from .shortcuts_dialog import ShortcutsDialog
 from .about_dialog import AboutDialog
@@ -39,7 +40,6 @@ from .navigate_dialog import NavigateDialog
 ORG_NAME = "Mycelia Interactive LLC"
 APP_NAME = "VanlifeDashboard"
 
-DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 UI_DIR = Path(__file__).resolve().parent
 
 
@@ -77,6 +77,9 @@ class MainWindow(QMainWindow):
 
         self._restore_layout()
         self._apply_theme(self._theme, persist=False)
+
+        # Health checks run after the window is up, never blocking launch.
+        QTimer.singleShot(0, self._run_startup_health_checks)
 
     # ---- central widget: page-bar + stacked Sort/Canvas pages ------------
 
@@ -304,7 +307,8 @@ class MainWindow(QMainWindow):
         self._add_action(tools_menu, "Model Selection...", enabled=False)
         open_data_action = self._add_action(tools_menu, "Open Data Folder")
         open_data_action.triggered.connect(self._open_data_folder)
-        self._add_action(tools_menu, "View Log", enabled=False)
+        view_log_action = self._add_action(tools_menu, "View Log")
+        view_log_action.triggered.connect(self._open_log_file)
 
         help_menu = menu_bar.addMenu("&Help")
         shortcuts_action = self._add_action(help_menu, "Shortcuts", shortcut="F1")
@@ -332,8 +336,17 @@ class MainWindow(QMainWindow):
 
     def _build_status_bar(self) -> None:
         status = QStatusBar(self)
-        status.showMessage("Ready. Phase 1 scaffolding, no real footage handling yet.")
+        status.showMessage("Ready. Checking roots, ffmpeg, and Ollama...")
         self.setStatusBar(status)
+
+    def _run_startup_health_checks(self) -> None:
+        results = health.run_all_checks()
+        failures = [r for r in results if not r.ok]
+        if not failures:
+            self.statusBar().showMessage("Ready. All startup checks passed.")
+            return
+        summary = "; ".join(f"{r.name}: {r.message}" for r in failures)
+        self.statusBar().showMessage(f"Ready, with {len(failures)} issue(s): {summary}")
 
     # ---- theme ------------------------------------------------------------
 
@@ -364,11 +377,20 @@ class MainWindow(QMainWindow):
         AboutDialog(self).exec()
 
     def _open_data_folder(self) -> None:
-        DATA_DIR.mkdir(parents=True, exist_ok=True)
+        config.DATA_DIR.mkdir(parents=True, exist_ok=True)
         if sys.platform == "win32":
-            os.startfile(DATA_DIR)  # noqa: S606
+            os.startfile(config.DATA_DIR)  # noqa: S606
         else:
-            subprocess.Popen(["xdg-open", str(DATA_DIR)])
+            subprocess.Popen(["xdg-open", str(config.DATA_DIR)])
+
+    def _open_log_file(self) -> None:
+        if not config.LOG_PATH.exists():
+            self.statusBar().showMessage("No log file yet, nothing's been logged this run.")
+            return
+        if sys.platform == "win32":
+            os.startfile(config.LOG_PATH)  # noqa: S606
+        else:
+            subprocess.Popen(["xdg-open", str(config.LOG_PATH)])
 
     # ---- layout persistence ------------------------------------------------
 

@@ -419,9 +419,9 @@ Phase 1 shipped before this requirement existed. This is the checklist Jeremy is
 
 **Build/Test:** Run the full walkthrough described in the plan's End-to-end verification section: browse, play, shuttle, mark, organize, discard, chat actions, folder registry, canvas, AI tagging, transcription, search, export, and the deliberate error/UX pass (Ollama down, root unreachable, forced organize failure, every Help menu item, resource monitor, model dropdown, spacebar, and every button's keyboard-equivalent parity).
 
-### Step 13.2 — README
+### Step 13.2 — README pass
 
-**Build:** `README.md`: how to run (`python -m vldash.main` or equivalent), the 3 default roots, default model, known limitations.
+**Build:** `README.md` was created early (during Phase 2, once the repo had enough real content to be worth a public-facing readme rather than waiting for the last phase). This step is a final accuracy pass: update the Status section, add known limitations, confirm every command in it still matches reality.
 
 **Test:** Following the README from a clean checkout (fresh `.venv`, `pip install -r requirements.txt`, run command) actually launches the app.
 

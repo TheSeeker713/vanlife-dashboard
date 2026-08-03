@@ -51,6 +51,8 @@ Full detail: [INSTRUCTIONS.md](INSTRUCTIONS.md) and [.claude/rules/phase-protoco
 
 ## Read order (every session)
 
+Claude Code auto-loads [CLAUDE.md](CLAUDE.md) at session start, which pulls this file in via an `@AGENTS.md` import, so 1 and 2 below happen automatically. Listed anyway for any agent that isn't Claude Code, or a human skimming the repo:
+
 1. [AGENTS.md](AGENTS.md) (this file)
 2. [INSTRUCTIONS.md](INSTRUCTIONS.md)
 3. [.claude/rules/](.claude/rules/) (`phase-protocol.md`, `devlog-voice.md`) — durable rules, auto-followed even if 1 and 2 aren't re-read

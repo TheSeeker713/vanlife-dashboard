@@ -109,6 +109,11 @@ tells that get flagged as AI-written:
   landscape
 - Referring to "Jeremy" in the third person inside an entry, the entry
   *is* his voice
+- Writing the literal word "Jeremy" anywhere in an entry, including
+  inside a quoted example of a past mistake. Don't name the mistake that
+  precisely at all, see "Fixing the devlog itself" below.
+- Making every entry roughly the same length. That uniformity across
+  entries is as much a tell as uniform sentence length inside one.
 
 ## Always do
 
@@ -125,3 +130,24 @@ tells that get flagged as AI-written:
   "realized," "turns out") rather than importance-signaling ones.
 - Don't force every entry to end on an uplifting note, real days don't.
 - No em dashes.
+- Vary length *across* entries, not just within one. A small fix gets
+  two sentences. A big day can run long. Real journaling is lumpy like
+  that, a real person doesn't write a five-paragraph essay every single
+  time regardless of how much actually happened. Before finishing a
+  batch of entries, look at them side by side, if they're all roughly
+  the same length, that's the tell, go cut some down.
+
+## Fixing the devlog itself
+
+When a past entry gets revised (wrong voice, wrong tense, a mistake
+found later), the entry documenting *that* fix must be short and vague,
+not a breakdown of exactly what was wrong. A real person doesn't write
+a forensic paragraph dissecting their own prior sentence construction,
+they'd write something like "touched up a couple of earlier entries,
+didn't love how they read" and move on. Never quote the broken phrasing
+verbatim, even as an example of what not to do, that just reintroduces
+the exact thing being fixed back into the file. One or two sentences is
+usually enough. If real substantive work happened alongside the cleanup
+(a process change, a new rule written), that part can get its normal
+level of detail, just don't let it stay tangled up with a play-by-play
+of the writing mistake itself.

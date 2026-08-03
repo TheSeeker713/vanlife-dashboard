@@ -4,12 +4,13 @@ from __future__ import annotations
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QScrollArea, QWidget
 
 PANELS: list[tuple[str, str]] = [
-    ("Browser", "Your raw footage and your sorted output folders, side by side. Pick a clip here to open it in the Player."),
+    ("Sort / Canvas", "The two pages of this app, switched at the top. Sort is where you triage clips one at a time. Canvas is a big corkboard for planning the edit as a whole."),
+    ("Media Bin", "Your raw footage and your sorted output folders, browsable as a thumbnail grid, filmstrip, or list. Pick a clip here to open it in the Player. Collapse it to a drawer or maximize it from its own header."),
     ("Player", "Watch the clip, shuttle through it, drop markers as you go."),
-    ("Timeline", "Every marker you've dropped on the open clip, laid out along the clip's length."),
+    ("Timeline", "Every marker you've dropped on the open clip, laid out along the clip's length, right under the Player."),
     ("Chat", "Tell the agent what to do in plain language, like 'file this in Animal clips.' It always asks before touching a file."),
-    ("Canvas", "A corkboard for planning bigger edits, drag clips onto a board and arrange them however the story needs."),
     ("Metadata Viewer", "The notes this app has kept on the open clip: your markers, your chat notes, and its own organize history."),
+    ("Canvas page", "A corkboard for planning bigger edits, drag clips onto a board and arrange them however the story needs."),
     ("Resource Monitor", "Optional. Live CPU, RAM, and GPU meters, off by default, one click away in the Tools menu if you want them."),
 ]
 

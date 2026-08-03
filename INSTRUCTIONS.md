@@ -94,27 +94,27 @@ I ...
 
 ---
 
-## PHASE 1: Design and UX scaffolding
+## PHASE 1: Design and UX scaffolding (redone)
 
-**Goal:** A themed, correctly laid out, empty shell every later phase fills in, not improvised as features get built.
+**Goal:** A themed, correctly laid out shell every later phase fills in, not improvised as features get built. This phase was built once already as a flat multi-dock layout and it didn't hold up visually, empty boxy panels, wrong proportions, a tab strip landing at the bottom of its group instead of the top. Redone against a click-through HTML mockup validated before any Qt code was touched, grounded in DaVinci Resolve's page-bar structure and Morphic Studio's full-page spatial Canvas.
 
-### Step 1.1 — Light theme stylesheet
+### Step 1.1 — Palette and both theme stylesheets
 
-**Build:** `app/ui/theme.qss`, a single light-theme stylesheet covering the app's widgets, loaded once at startup.
+**Build:** `app/ui/palette.py` (shared hex constants: warm amber/terracotta accent, semantic tag colors, both light and dark surface tokens). `app/ui/dark_theme.qss` (default) and `app/ui/light_theme.qss`, both built together from the same palette, not "dark now, light later."
 
-**Test:** Launching a minimal `QApplication` with the stylesheet applied shows a consistent light theme, no unstyled default-grey widgets mixed in.
+**Test:** Launching a minimal `QApplication` with `dark_theme.qss` applied shows a consistent dark theme, no unstyled default-grey widgets mixed in. Swapping in `light_theme.qss` at runtime shows a consistent light theme with the same layout.
 
-### Step 1.2 — MainWindow shell with placeholder panels
+### Step 1.2 — MainWindow shell: page-bar, Sort page, Canvas page placeholder
 
-**Build:** `app/ui/main_window.py`: `QMainWindow` with dockable placeholder panels for Browser, Player, Timeline, Chat, Canvas, Metadata Viewer, and an off-by-default Resource Monitor. Menu bar scaffolded with the full roster (File, Edit, View, Clip, Canvas, Tools, Help), items present even if disabled until their feature phase lands.
+**Build:** `app/ui/main_window.py`: `QMainWindow` with a top page-bar (`Sort` / `Canvas` tabs, plus a theme toggle) driving a page stack. Sort page: Media Bin (left, placeholder content), Player (center, placeholder), Timeline strip (slim, directly under Player), Chat drawer and Metadata drawer stacked on the right (independent, not tabbed together). Canvas page: placeholder full-page content, reachable via its page-bar tab. Menu bar scaffolded with the full roster (File, Edit, View, Clip, Canvas, Tools, Help), items present even if disabled until their feature phase lands.
 
-**Test:** App launches to the shell. Every panel and every menu item from the roster is present (even if inert). No crash on launch.
+**Test:** App launches dark-themed to the shell. Page-bar switches between Sort and Canvas correctly. Every panel and every menu item from the roster is present (even if inert). No crash on launch.
 
-### Step 1.3 — Layout persistence and shortcut cheat sheet
+### Step 1.3 — Drawer component, layout persistence, shortcut cheat sheet
 
-**Build:** `QSettings`-backed `saveState()`/`restoreState()` for dock layout. `Help > Shortcuts` (and `?`/F1) opens a cheat sheet overlay listing the shortcut roster (populated as later phases add real shortcuts).
+**Build:** `app/ui/drawer.py`: reusable collapsible-panel component with docked/collapsed states (Media Bin additionally gets a maximized state), used by Media Bin, Chat, and Metadata rather than three hand-rolled implementations. `QSettings`-backed `saveState()`/`restoreState()` for layout, including which drawers are collapsed and Media Bin's current state. `Help > Shortcuts` (and `?`/F1) opens a cheat sheet overlay listing the shortcut roster (populated as later phases add real shortcuts).
 
-**Test:** Resize/move/collapse a panel, close and relaunch the app, confirm the arrangement persisted. Cheat sheet opens and closes cleanly.
+**Test:** Media Bin's collapse (`⟨`/`⟩`) and maximize (`⤢`) both work and can be combined with the other panels correctly (maximizing Media Bin hides Chat/Metadata/Timeline as expected). Chat and Metadata collapse independently of each other. Resize/collapse a panel, switch to Canvas and back, close and relaunch the app, confirm the arrangement (including drawer/maximize states) persisted. Cheat sheet opens and closes cleanly.
 
 **STOP after Phase 1.** Report a phase summary. Wait for Jeremy's go-ahead.
 
@@ -152,15 +152,15 @@ I ...
 
 ---
 
-## PHASE 3: Browser panel
+## PHASE 3: Media Bin panel
 
-**Goal:** Real, working directory browsing for the 3 default roots, wired into the Phase 1 shell.
+**Goal:** Real, working directory browsing for the 3 default roots, presented as a Resolve-style Media Pool rather than a bare file tree, wired into the Phase 1 Sort page.
 
-### Step 3.1 — Tree views for the 3 default roots
+### Step 3.1 — Grid/Filmstrip/List views for the 3 default roots
 
-**Build:** `app/ui/browser_panel.py`: tree views for Source (read-only), Destination (browse + create/rename/delete), Project (read-only), all routed through `resolve_safe_path`.
+**Build:** `app/ui/media_bin_panel.py`: Grid (default)/Filmstrip/List view toggle for Source (read-only), Destination (browse + create/rename/delete), Project (read-only), all routed through `resolve_safe_path`. `media.py`/ffmpeg don't exist yet, so grid cells use a file-type placeholder graphic, not a blank box and not a real thumbnail yet, that lands in Phase 4.
 
-**Test:** Real directory trees render for all 3 roots against the actual `J:` and `D:` paths. Dest tree create/rename works. Deleting a non-empty dest folder is refused with a clear error, not a recursive wipe.
+**Test:** Real directory entries render for all 3 roots against the actual `J:` and `D:` paths, in all 3 view modes. Dest-side create/rename works. Deleting a non-empty dest folder is refused with a clear error, not a recursive wipe.
 
 **STOP after Phase 3.** Report a phase summary. Wait for Jeremy's go-ahead.
 
@@ -188,6 +188,12 @@ I ...
 
 **Test:** Real clip defaults to 720p and scrubs smoothly. Switching to 4K plays the original file directly with no transcode. Switching to 1080p generates and plays that proxy.
 
+### Step 4.4 — Real thumbnails in the Media Bin
+
+**Build:** Wire `media.py::grab_thumbnail()` into the Phase 3 Media Bin grid, replacing the file-type placeholder graphic with a real ffmpeg frame grab, cached alongside proxies.
+
+**Test:** Media Bin grid cells for real clips show actual frame thumbnails instead of placeholders. A clip without a cached thumbnail yet shows the placeholder briefly, then updates once the grab completes, without blocking the UI.
+
 **STOP after Phase 4.** Report a phase summary. Wait for Jeremy's go-ahead.
 
 ---
@@ -202,9 +208,9 @@ I ...
 
 **Test:** Against a real clip: speed cycling wraps correctly both directions, arrow-key stepping moves exactly one frame, spacebar does nothing while typing in chat or a marker note.
 
-### Step 5.2 — Fullscreen and timeline widget
+### Step 5.2 — Fullscreen and timeline strip
 
-**Build:** Plain `F` toggles fullscreen. `app/ui/timeline_widget.py` paints marker ticks (colored by tag) along the scrub bar.
+**Build:** Plain `F` toggles fullscreen. `app/ui/timeline_strip.py` paints marker ticks (colored by tag) along the scrub bar, sized as a slim strip directly under the Player, not a peer-sized dock.
 
 **Test:** `F` toggles fullscreen cleanly in and out. Timeline renders correctly once markers exist (verified again in Phase 6).
 
@@ -296,7 +302,7 @@ I ...
 
 ### Step 9.1 — Add Folder dialog and dynamic roots
 
-**Build:** `app/ui/add_folder_dialog.py`: native folder picker, prompts every time for a label and a kind (`readonly`/`dest`). `paths.py` resolves against the live `roots` table including user-added rows. `browser_panel.py` renders one tree section per registered root.
+**Build:** `app/ui/add_folder_dialog.py`: native folder picker, prompts every time for a label and a kind (`readonly`/`dest`). `paths.py` resolves against the live `roots` table including user-added rows. `media_bin_panel.py` renders one section per registered root.
 
 **Test:** Add a throwaway test folder, confirm it's browsable. Confirm a `readonly`-kind added folder is rejected as an organize/copy target. Unregister it and confirm the app forgets it without touching the folder on disk.
 
@@ -304,15 +310,15 @@ I ...
 
 ---
 
-## PHASE 10: Canvas
+## PHASE 10: Canvas page
 
-**Goal:** The editor-planning corkboard, cards, regions, multiple boards.
+**Goal:** The editor-planning corkboard, cards, regions, multiple boards, filling the Canvas page already reachable from the Phase 1 page-bar.
 
 ### Step 10.1 — Board switcher and cards
 
-**Build:** `app/ui/canvas_panel.py`, `canvas_card.py`: multiple named boards, drag-a-clip-to-create-a-card, `media.py::grab_thumbnail()` for card previews, viewport caching for smooth pan/zoom.
+**Build:** `app/ui/canvas_panel.py`, `canvas_card.py`: replace the Phase 1 placeholder Canvas page content with the real toolbar (board switcher, card/region count) and surface; multiple named boards, drag-a-clip-to-create-a-card, `media.py::grab_thumbnail()` for card previews, viewport caching for smooth pan/zoom.
 
-**Test:** Create a board, drag 3-4 real clips onto it, confirm smooth pan/zoom with the cards placed. Double-click a card, confirm it opens that clip in the Player tab.
+**Test:** Switch to the Canvas page, create a board, drag 3-4 real clips onto it, confirm smooth pan/zoom with the cards placed. Double-click a card, confirm it switches back to the Sort page with that clip loaded in the Player.
 
 ### Step 10.2 — Regions and persistence
 

@@ -1,0 +1,539 @@
+<title>Vanlife Dashboard — Layout Redesign Mockup</title>
+<style>
+  @font-face {
+    font-family: 'SysUI';
+    src: local('Segoe UI Variable Text'), local('Segoe UI'), local('San Francisco'), local('Helvetica Neue');
+  }
+
+  :root {
+    --bg: #f4f3f0;
+    --panel: #ffffff;
+    --panel-2: #ebe9e5;
+    --border: #d9d6d0;
+    --text: #232019;
+    --text-muted: #746e63;
+    --accent: #c46a2b;
+    --accent-ink: #ffffff;
+    --keeper: #3f7d52;
+    --reject: #b0503f;
+    --broll: #3b6f9e;
+    --warn: #a9791f;
+    --shadow: 0 1px 2px rgba(30,25,15,0.08);
+    --radius: 5px;
+    --mono: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #131412;
+      --panel: #1b1c19;
+      --panel-2: #232420;
+      --border: #35362f;
+      --text: #ece9e2;
+      --text-muted: #8f8a7d;
+      --accent: #d9843c;
+      --accent-ink: #17130a;
+      --keeper: #4f9e6e;
+      --reject: #c1503f;
+      --broll: #4a80b0;
+      --warn: #c9a227;
+      --shadow: 0 1px 3px rgba(0,0,0,0.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #131412; --panel: #1b1c19; --panel-2: #232420; --border: #35362f;
+    --text: #ece9e2; --text-muted: #8f8a7d; --accent: #d9843c; --accent-ink: #17130a;
+    --keeper: #4f9e6e; --reject: #c1503f; --broll: #4a80b0; --warn: #c9a227;
+    --shadow: 0 1px 3px rgba(0,0,0,0.4);
+  }
+  :root[data-theme="light"] {
+    --bg: #f4f3f0; --panel: #ffffff; --panel-2: #ebe9e5; --border: #d9d6d0;
+    --text: #232019; --text-muted: #746e63; --accent: #c46a2b; --accent-ink: #ffffff;
+    --keeper: #3f7d52; --reject: #b0503f; --broll: #3b6f9e; --warn: #a9791f;
+    --shadow: 0 1px 2px rgba(30,25,15,0.08);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: 'SysUI', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-size: 13px; height: 100vh; overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .app { display: flex; flex-direction: column; height: 100%; }
+
+  /* ---------- Page bar (Resolve-style) ---------- */
+  .pagebar {
+    display: flex; align-items: center; gap: 4px;
+    background: var(--panel-2); border-bottom: 1px solid var(--border);
+    padding: 0 10px; height: 40px; flex-shrink: 0;
+  }
+  .brand {
+    font-weight: 700; font-size: 13px; letter-spacing: 0.02em;
+    margin-right: 18px; color: var(--text); display: flex; align-items: center; gap: 7px;
+    white-space: nowrap;
+  }
+  .brand-mark {
+    width: 18px; height: 18px; border-radius: 4px;
+    background: linear-gradient(135deg, var(--accent), var(--warn));
+    flex-shrink: 0;
+  }
+  .page-tab {
+    appearance: none; border: none; background: transparent; color: var(--text-muted);
+    font: inherit; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+    font-size: 11px; padding: 9px 16px; cursor: pointer; border-radius: var(--radius) var(--radius) 0 0;
+    border-bottom: 2px solid transparent; transition: color .12s ease;
+  }
+  .page-tab:hover { color: var(--text); }
+  .page-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .pagebar-spacer { flex: 1; }
+  .icon-btn {
+    appearance: none; border: 1px solid var(--border); background: var(--panel);
+    color: var(--text-muted); width: 28px; height: 28px; border-radius: var(--radius);
+    display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 13px;
+  }
+  .icon-btn:hover { color: var(--text); border-color: var(--accent); }
+
+  /* ---------- Workspace ---------- */
+  .workspace { flex: 1; display: flex; min-height: 0; position: relative; }
+  .page-view { display: none; flex: 1; min-height: 0; }
+  .page-view.active { display: flex; }
+
+  /* ---------- Media Bin (drawer / docked / maximized) ---------- */
+  .media-bin {
+    width: 300px; flex-shrink: 0; background: var(--panel);
+    border-right: 1px solid var(--border); display: flex; flex-direction: column;
+    transition: width .16s ease, min-width .16s ease; min-width: 300px;
+  }
+  .media-bin.collapsed { width: 40px; min-width: 40px; }
+  .media-bin.maximized { width: 100%; min-width: 100%; }
+  .panel-header {
+    display: flex; align-items: center; gap: 8px; height: 34px; flex-shrink: 0;
+    padding: 0 8px 0 12px; border-bottom: 1px solid var(--border); background: var(--panel-2);
+  }
+  .panel-title {
+    font-weight: 600; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase;
+    color: var(--text-muted); flex: 1; white-space: nowrap; overflow: hidden;
+  }
+  .media-bin.collapsed .panel-title,
+  .media-bin.collapsed .header-actions,
+  .media-bin.collapsed .bin-toolbar,
+  .media-bin.collapsed .bin-grid { display: none; }
+  .media-bin.collapsed .panel-header { flex-direction: column; height: auto; padding: 8px 0; gap: 10px; }
+  .header-actions { display: flex; gap: 4px; }
+  .mini-btn {
+    appearance: none; border: none; background: transparent; color: var(--text-muted);
+    width: 22px; height: 22px; border-radius: 4px; display: flex; align-items: center;
+    justify-content: center; cursor: pointer; font-size: 12px;
+  }
+  .mini-btn:hover { background: var(--border); color: var(--text); }
+  .mini-btn.active-toggle { color: var(--accent); }
+
+  .bin-toolbar {
+    display: flex; align-items: center; gap: 6px; padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .seg { display: flex; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .seg button {
+    appearance: none; border: none; background: var(--panel); color: var(--text-muted);
+    font: inherit; font-size: 11px; padding: 4px 8px; cursor: pointer;
+  }
+  .seg button.active { background: var(--accent); color: var(--accent-ink); }
+  .search-fake {
+    flex: 1; background: var(--panel-2); border: 1px solid var(--border); border-radius: var(--radius);
+    font-size: 11px; color: var(--text-muted); padding: 4px 8px;
+  }
+
+  .bin-grid {
+    flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(2, 1fr);
+    gap: 8px; padding: 10px; align-content: start;
+  }
+  .clip-card {
+    background: var(--panel-2); border: 1px solid var(--border); border-radius: var(--radius);
+    overflow: hidden; cursor: pointer; transition: border-color .1s ease;
+  }
+  .clip-card:hover { border-color: var(--accent); }
+  .clip-thumb {
+    aspect-ratio: 16/9; position: relative;
+    background: linear-gradient(135deg, var(--thumb-a, #4a5a3f), var(--thumb-b, #2c3624));
+    display: flex; align-items: flex-end; justify-content: space-between; padding: 4px 5px;
+  }
+  .clip-dur {
+    font: 600 9px/1 var(--mono); background: rgba(0,0,0,0.55); color: #fff;
+    padding: 2px 4px; border-radius: 3px;
+  }
+  .tag-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 0 2px rgba(0,0,0,0.35); }
+  .clip-meta { padding: 5px 6px 6px; }
+  .clip-name {
+    font-size: 10.5px; font-weight: 600; white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis; color: var(--text);
+  }
+  .clip-sub { font-size: 9.5px; color: var(--text-muted); margin-top: 1px; }
+
+  /* ---------- Center: Player + Timeline ---------- */
+  .center-col { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--bg); }
+  .player-stage {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    background: #0c0d0b; margin: 10px 10px 0; border-radius: var(--radius);
+    position: relative; min-height: 0; border: 1px solid var(--border);
+  }
+  .player-placeholder { color: #55584c; font-size: 12px; text-align: center; line-height: 1.6; }
+  .player-badge {
+    position: absolute; top: 10px; left: 10px; font: 600 10px/1 var(--mono);
+    color: #cfcabb; background: rgba(0,0,0,0.5); padding: 3px 7px; border-radius: 3px;
+    letter-spacing: 0.03em;
+  }
+  .quality-badge {
+    position: absolute; top: 10px; right: 10px; font: 600 10px/1 var(--mono);
+    color: var(--accent-ink); background: var(--accent); padding: 3px 7px; border-radius: 3px;
+  }
+
+  .transport {
+    display: flex; align-items: center; gap: 6px; padding: 8px 10px 4px; flex-shrink: 0;
+  }
+  .transport-btn {
+    appearance: none; border: 1px solid var(--border); background: var(--panel);
+    color: var(--text); width: 28px; height: 26px; border-radius: var(--radius);
+    display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 12px;
+  }
+  .transport-btn.play { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); width: 34px; }
+  .transport-spacer { flex: 1; }
+  .transport-label { font-size: 10.5px; color: var(--text-muted); font-family: var(--mono); }
+
+  .timeline-strip {
+    height: 46px; flex-shrink: 0; margin: 4px 10px 10px; background: var(--panel);
+    border: 1px solid var(--border); border-radius: var(--radius); position: relative;
+    overflow: hidden;
+  }
+  .timeline-ruler {
+    position: absolute; inset: 0; background:
+      repeating-linear-gradient(90deg, var(--border) 0 1px, transparent 1px 60px);
+    opacity: 0.5;
+  }
+  .marker-tick {
+    position: absolute; top: 6px; bottom: 6px; width: 3px; border-radius: 2px;
+  }
+  .timeline-label {
+    position: absolute; bottom: 3px; left: 8px; font-size: 9px; color: var(--text-muted);
+    font-family: var(--mono); letter-spacing: 0.03em;
+  }
+
+  /* ---------- Right rail: independent drawers ---------- */
+  .right-rail { width: 300px; flex-shrink: 0; display: flex; flex-direction: column; border-left: 1px solid var(--border); }
+  .drawer { display: flex; flex-direction: column; background: var(--panel); overflow: hidden; transition: flex-basis .16s ease; }
+  .drawer.chat { flex: 1 1 62%; border-bottom: 1px solid var(--border); }
+  .drawer.metadata { flex: 1 1 38%; }
+  .drawer.collapsed { flex: 0 0 34px; }
+  .drawer.collapsed .drawer-body { display: none; }
+
+  .drawer-body { flex: 1; overflow-y: auto; padding: 10px; min-height: 0; }
+
+  .chat-msg { margin-bottom: 10px; max-width: 92%; }
+  .chat-msg.user { margin-left: auto; }
+  .chat-bubble { padding: 7px 10px; border-radius: 8px; font-size: 12px; line-height: 1.45; }
+  .chat-msg.user .chat-bubble { background: var(--accent); color: var(--accent-ink); border-bottom-right-radius: 2px; }
+  .chat-msg.agent .chat-bubble { background: var(--panel-2); border: 1px solid var(--border); border-bottom-left-radius: 2px; }
+  .confirm-card {
+    margin-top: 6px; border: 1px solid var(--accent); border-radius: 6px; padding: 8px 10px;
+    background: color-mix(in srgb, var(--accent) 10%, transparent); font-size: 11.5px;
+  }
+  .confirm-card .ctitle { font-weight: 700; margin-bottom: 4px; }
+  .confirm-actions { display: flex; gap: 6px; margin-top: 8px; }
+  .confirm-actions button {
+    appearance: none; border: 1px solid var(--border); background: var(--panel); color: var(--text);
+    font: inherit; font-size: 11px; padding: 4px 10px; border-radius: 4px; cursor: pointer;
+  }
+  .confirm-actions button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
+  .chat-input-row {
+    display: flex; gap: 6px; padding: 8px; border-top: 1px solid var(--border); flex-shrink: 0;
+  }
+  .chat-input-row input {
+    flex: 1; background: var(--panel-2); border: 1px solid var(--border); border-radius: 5px;
+    padding: 6px 8px; font: inherit; font-size: 12px; color: var(--text);
+  }
+  .chat-input-row button {
+    background: var(--accent); color: var(--accent-ink); border: none; border-radius: 5px;
+    padding: 0 12px; font: inherit; font-weight: 600; font-size: 11.5px; cursor: pointer;
+  }
+
+  .meta-frontmatter {
+    font-family: var(--mono); font-size: 10.5px; background: var(--panel-2); border: 1px solid var(--border);
+    border-radius: 5px; padding: 8px; line-height: 1.6; color: var(--text-muted); white-space: pre;
+    overflow-x: auto;
+  }
+  .meta-frontmatter .k { color: var(--broll); }
+  .meta-section-title {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted);
+    margin: 10px 0 4px; font-weight: 700;
+  }
+  .meta-marker-row { display: flex; gap: 6px; align-items: baseline; font-size: 11.5px; padding: 2px 0; }
+  .meta-marker-row .t { font-family: var(--mono); color: var(--accent); font-size: 10.5px; flex-shrink: 0; }
+
+  /* ---------- Canvas page (Morphic-style spatial board) ---------- */
+  .canvas-page { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+  .canvas-toolbar {
+    display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--border);
+    background: var(--panel-2); flex-shrink: 0;
+  }
+  .board-switcher {
+    display: flex; align-items: center; gap: 6px; background: var(--panel); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 5px 10px; font-size: 12px; font-weight: 600; cursor: pointer;
+  }
+  .board-switcher .chev { color: var(--text-muted); font-size: 9px; }
+  .canvas-toolbar .pagebar-spacer { flex: 1; }
+  .canvas-surface {
+    flex: 1; position: relative; overflow: hidden;
+    background-color: var(--bg);
+    background-image: radial-gradient(circle, var(--border) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+  .region {
+    position: absolute; border: 1.5px dashed var(--broll); border-radius: 8px;
+    background: color-mix(in srgb, var(--broll) 6%, transparent);
+  }
+  .region-label {
+    position: absolute; top: -11px; left: 12px; background: var(--bg); padding: 0 6px;
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--broll);
+  }
+  .canvas-card {
+    position: absolute; width: 132px; background: var(--panel); border: 1px solid var(--border);
+    border-radius: 6px; box-shadow: var(--shadow); overflow: hidden; cursor: grab;
+  }
+  .canvas-card .clip-thumb { aspect-ratio: 16/10; }
+  .canvas-card .clip-meta { padding: 5px 6px; }
+
+  /* ---------- Status bar ---------- */
+  .statusbar {
+    height: 24px; flex-shrink: 0; display: flex; align-items: center; padding: 0 12px;
+    border-top: 1px solid var(--border); background: var(--panel-2); font-size: 10.5px; color: var(--text-muted);
+    gap: 14px;
+  }
+  .statusbar .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--keeper); }
+
+  ::-webkit-scrollbar { width: 9px; height: 9px; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+</style>
+
+<div class="app">
+  <div class="pagebar">
+    <div class="brand"><span class="brand-mark"></span>Vanlife Dashboard</div>
+    <button class="page-tab active" data-page="sort">Sort</button>
+    <button class="page-tab" data-page="canvas">Canvas</button>
+    <div class="pagebar-spacer"></div>
+    <button class="icon-btn" id="themeToggle" title="Toggle light/dark">◐</button>
+  </div>
+
+  <div class="workspace">
+
+    <!-- SORT PAGE -->
+    <div class="page-view active" id="page-sort">
+      <div class="media-bin" id="mediaBin">
+        <div class="panel-header">
+          <span class="panel-title">Media Bin — Source</span>
+          <div class="header-actions">
+            <button class="mini-btn" id="binCollapseBtn" title="Collapse to drawer">⟨</button>
+            <button class="mini-btn" id="binMaxBtn" title="Maximize">⤢</button>
+          </div>
+        </div>
+        <div class="bin-toolbar">
+          <div class="seg">
+            <button class="active">Grid</button>
+            <button>Filmstrip</button>
+            <button>List</button>
+          </div>
+          <div class="search-fake">Filter clips…</div>
+        </div>
+        <div class="bin-grid" id="binGrid"><!-- injected --></div>
+      </div>
+
+      <!-- Collapsed drawer tab (shown only when collapsed) -->
+      <div id="binDrawerTab" style="display:none; writing-mode:vertical-rl; align-items:center; justify-content:center; width:0;"></div>
+
+      <div class="center-col">
+        <div class="player-stage">
+          <span class="player-badge">GOPR0a471f.MOV · 00:41 / 02:18</span>
+          <span class="quality-badge">720p</span>
+          <div class="player-placeholder">Player<br><span style="opacity:.7">Open a clip from the Media Bin to play it here.</span></div>
+        </div>
+        <div class="transport">
+          <button class="transport-btn">J</button>
+          <button class="transport-btn play">▶</button>
+          <button class="transport-btn">K</button>
+          <button class="transport-btn">L</button>
+          <span class="transport-label">1×</span>
+          <div class="transport-spacer"></div>
+          <span class="transport-label">M — mark · Shift+X — discard</span>
+        </div>
+        <div class="timeline-strip">
+          <div class="timeline-ruler"></div>
+          <div class="marker-tick" style="left:14%; background:var(--keeper);"></div>
+          <div class="marker-tick" style="left:31%; background:var(--broll);"></div>
+          <div class="marker-tick" style="left:47%; background:var(--warn);"></div>
+          <div class="marker-tick" style="left:68%; background:var(--keeper);"></div>
+          <div class="marker-tick" style="left:82%; background:var(--reject);"></div>
+          <div class="timeline-label">TIMELINE — 4 markers</div>
+        </div>
+      </div>
+
+      <div class="right-rail">
+        <div class="drawer chat" id="chatDrawer">
+          <div class="panel-header">
+            <span class="panel-title">Chat</span>
+            <div class="header-actions"><button class="mini-btn" data-collapse="chatDrawer">⌄</button></div>
+          </div>
+          <div class="drawer-body">
+            <div class="chat-msg user"><div class="chat-bubble">File this in Animal clips</div></div>
+            <div class="chat-msg agent">
+              <div class="chat-bubble">Got it — here's what I'll do:</div>
+              <div class="confirm-card">
+                <div class="ctitle">Organize clip</div>
+                GOPR0a471f.MOV → <b>Studio 25 Films / Animal clips</b>
+                <div class="confirm-actions">
+                  <button class="primary">Confirm</button>
+                  <button>Cancel</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="chat-input-row">
+            <input placeholder="Tell the agent what to do…" />
+            <button>Send</button>
+          </div>
+        </div>
+        <div class="drawer metadata" id="metaDrawer">
+          <div class="panel-header">
+            <span class="panel-title">Metadata Viewer</span>
+            <div class="header-actions"><button class="mini-btn" data-collapse="metaDrawer">⌄</button></div>
+          </div>
+          <div class="drawer-body">
+            <div class="meta-frontmatter"><span class="k">status:</span> reviewing
+<span class="k">source:</span> Clips/GOPR0a471f.MOV
+<span class="k">duration:</span> 02:18</div>
+            <div class="meta-section-title">Markers</div>
+            <div class="meta-marker-row"><span class="t">00:19</span> dog runs into frame</div>
+            <div class="meta-marker-row"><span class="t">00:42</span> b-roll, good light</div>
+            <div class="meta-marker-row"><span class="t">01:05</span> wind noise, audio issue</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CANVAS PAGE -->
+    <div class="page-view" id="page-canvas">
+      <div class="canvas-page">
+        <div class="canvas-toolbar">
+          <div class="board-switcher">Rough Assembly <span class="chev">▾</span></div>
+          <span style="color:var(--text-muted); font-size:11px;">3 regions · 11 cards</span>
+          <div class="pagebar-spacer"></div>
+          <button class="icon-btn">+</button>
+        </div>
+        <div class="canvas-surface" id="canvasSurface"><!-- injected --></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="statusbar">
+    <span class="dot"></span><span>Ready</span>
+    <span>·</span><span>Ollama: hermes3:8b</span>
+    <span>·</span><span>3 clips reviewed today</span>
+  </div>
+</div>
+
+<script>
+  // ---- clip thumbnail palette (stand-in for real frame grabs) ----
+  const palettes = [
+    ['#5a6b3f','#33401f'], ['#3f5a6b','#1f3340'], ['#6b4f3f','#402a1f'],
+    ['#4a3f6b','#241f40'], ['#6b3f4f','#401f2a'], ['#3f6b5e','#1f402f'],
+  ];
+  const tagColors = { keeper:'var(--keeper)', broll:'var(--broll)', reject:'var(--reject)', warn:'var(--warn)', none:null };
+  const clips = [
+    ['GOPR0a471f.MOV','2:18','keeper'], ['GOPR165b18.MOV','1:14','broll'],
+    ['20191213_1910.mp4','0:52','none'], ['GOPR0e6c3c.MOV','9:57','keeper'],
+    ['GOPR02ac2e.MOV','7:25','warn'], ['GOPR029438.MOV','0:35','none'],
+    ['20191214_1328.mp4','1:25','broll'], ['GOPR11936780.mp4','9:16','reject'],
+  ];
+  const grid = document.getElementById('binGrid');
+  clips.forEach((c,i)=>{
+    const [a,b] = palettes[i % palettes.length];
+    const dot = tagColors[c[2]] ? `<span class="tag-dot" style="background:${tagColors[c[2]]}"></span>` : '';
+    grid.insertAdjacentHTML('beforeend', `
+      <div class="clip-card">
+        <div class="clip-thumb" style="--thumb-a:${a};--thumb-b:${b}">
+          ${dot}<span class="clip-dur">${c[1]}</span>
+        </div>
+        <div class="clip-meta">
+          <div class="clip-name">${c[0]}</div>
+          <div class="clip-sub">Clips/</div>
+        </div>
+      </div>`);
+  });
+
+  // ---- canvas page mock cards + regions ----
+  const surface = document.getElementById('canvasSurface');
+  const regions = [
+    {x:30,y:30,w:340,h:230,label:'Act 1 — Departure'},
+    {x:400,y:30,w:320,h:230,label:'Act 2 — The Road'},
+    {x:30,y:290,w:360,h:190,label:'Maybe Pile'},
+  ];
+  regions.forEach(r=>{
+    surface.insertAdjacentHTML('beforeend', `
+      <div class="region" style="left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${r.h}px;">
+        <span class="region-label">${r.label}</span>
+      </div>`);
+  });
+  const cardPos = [
+    [55,55],[200,55],[55,150],[430,55],[575,55],[430,150],
+    [55,320],[200,320],[730,60],[730,160],[350,340]
+  ];
+  cardPos.forEach((p,i)=>{
+    const [a,b] = palettes[i % palettes.length];
+    const c = clips[i % clips.length];
+    surface.insertAdjacentHTML('beforeend', `
+      <div class="canvas-card" style="left:${p[0]}px;top:${p[1]}px;">
+        <div class="clip-thumb" style="--thumb-a:${a};--thumb-b:${b}"></div>
+        <div class="clip-meta"><div class="clip-name">${c[0]}</div></div>
+      </div>`);
+  });
+
+  // ---- page switching ----
+  document.querySelectorAll('.page-tab').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.page-tab').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.page-view').forEach(v=>v.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('page-' + btn.dataset.page).classList.add('active');
+    });
+  });
+
+  // ---- media bin collapse / maximize ----
+  const bin = document.getElementById('mediaBin');
+  document.getElementById('binCollapseBtn').addEventListener('click', ()=>{
+    bin.classList.toggle('collapsed');
+    bin.classList.remove('maximized');
+    document.getElementById('binCollapseBtn').textContent = bin.classList.contains('collapsed') ? '⟩' : '⟨';
+  });
+  document.getElementById('binMaxBtn').addEventListener('click', ()=>{
+    bin.classList.toggle('maximized');
+    bin.classList.remove('collapsed');
+  });
+
+  // ---- drawer collapse (chat / metadata independent) ----
+  document.querySelectorAll('[data-collapse]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const el = document.getElementById(btn.dataset.collapse);
+      el.classList.toggle('collapsed');
+      btn.textContent = el.classList.contains('collapsed') ? '⌃' : '⌄';
+    });
+  });
+
+  // ---- theme toggle ----
+  const root = document.documentElement;
+  document.getElementById('themeToggle').addEventListener('click', ()=>{
+    const current = root.getAttribute('data-theme') ||
+      (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    root.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+  });
+</script>
